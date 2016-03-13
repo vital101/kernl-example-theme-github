@@ -80,7 +80,7 @@ class ThemeUpdateChecker {
         //Query args to append to the URL. Themes can add their own by using a filter callback (see addQueryArgFilter()).
         $queryArgs['installed_version'] = $this->getInstalledVersion();
         if($this->purchaseCode) {
-            $queryArgs['code'] = $this->purchaseCode;
+            $queryArgs['code'] = urlencode($this->purchaseCode);
         }
         $queryArgs = apply_filters(self::$filterPrefix.'query_args-'.$this->theme, $queryArgs);
 
