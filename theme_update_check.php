@@ -111,11 +111,26 @@ class ThemeUpdateChecker {
 			if ( ($themeUpdate != null) && version_compare($themeUpdate->version, $this->getInstalledVersion(), '<=') ){
 				$themeUpdate = null;
 			}
+		} else if ($code == 401) {
+			add_action( 'admin_notices', array($this, 'purchase_code_invalid_notice'));
 		}
 
 		$themeUpdate = apply_filters(self::$filterPrefix.'result-'.$this->theme, $themeUpdate, $result);
 		return $themeUpdate;
 	}
+
+	public function purchase_code_invalid_notice() {
+		$theme = wp_get_theme($this->theme);
+		$themeName = $theme->get('Name');
+    ?>
+        <div class="notice notice-error">
+            <p>
+                <strong><?=$themeName?>:  </strong>
+                Your purchase code is invalid.  Please make sure that you have entered a valid purchase code to ensure that you receive updates.
+            </p>
+        </div>
+    <?php
+    }
 
 	/**
 	 * Get the currently installed version of our theme.
