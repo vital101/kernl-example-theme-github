@@ -125,7 +125,7 @@ class ThemeUpdateChecker {
     ?>
         <div class="notice notice-error">
             <p>
-                <strong><?=$themeName?>:  </strong>
+                <strong><? echo $themeName; ?>:  </strong>
                 Your purchase code is invalid.  Please make sure that you have entered a valid purchase code to ensure that you receive updates.
             </p>
         </div>
