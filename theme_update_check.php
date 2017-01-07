@@ -82,9 +82,14 @@ class ThemeUpdateChecker {
 	public function requestUpdate($queryArgs = array()){
 		//Query args to append to the URL. Themes can add their own by using a filter callback (see addQueryArgFilter()).
 		$queryArgs['installed_version'] = $this->getInstalledVersion();
-		if($this->purchaseCode) {
-			$queryArgs['code'] = urlencode($this->purchaseCode);
-		}
+		if($this->purchaseCode) { $queryArgs['code'] = urlencode($this->purchaseCode); }
+        try {
+            $urlParts = parse_url(get_site_url());
+            $domain = $urlParts['host'];
+        } catch(Exception $err) {
+            $domain = '';
+        }
+        $queryArgs['domain'] = urlencode($domain);
 		$queryArgs = apply_filters(self::$filterPrefix.'query_args-'.$this->theme, $queryArgs);
 
 		//Various options for the wp_remote_get() call. Themes can filter these, too.
