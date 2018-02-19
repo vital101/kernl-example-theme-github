@@ -26,6 +26,7 @@ class ThemeUpdateChecker {
 	// Kernl Custom
 	public $license = false;
 	public $remoteGetTimeout = 10;
+	public $collectAnalytics = true;
 
 	protected $optionName = '';      //Where to store update info.
 	protected $automaticCheckDone = false;
@@ -83,13 +84,30 @@ class ThemeUpdateChecker {
 		//Query args to append to the URL. Themes can add their own by using a filter callback (see addQueryArgFilter()).
 		$queryArgs['installed_version'] = $this->getInstalledVersion();
 		if($this->license) { $queryArgs['license'] = urlencode($this->license); }
-        try {
+
+		try {
             $urlParts = parse_url(get_site_url());
             $domain = $urlParts['host'];
         } catch(Exception $err) {
             $domain = '';
+		}
+
+		try {
+            $phpVersion = phpversion();
+        } catch(Exception $err) {
+            $phpVersion = '';
         }
-        $queryArgs['domain'] = urlencode($domain);
+
+        try {
+            $language = get_bloginfo('language');
+        } catch(Exception $err) {
+            $language = '';
+		}
+
+		$queryArgs['domain'] = urlencode($domain);
+		$queryArgs['collectAnalytics'] = $this->collectAnalytics;
+		$queryArgs['phpVersion'] = $phpVersion;
+        $queryArgs['language'] = $language;
 		$queryArgs = apply_filters(self::$filterPrefix.'query_args-'.$this->theme, $queryArgs);
 
 		//Various options for the wp_remote_get() call. Themes can filter these, too.
