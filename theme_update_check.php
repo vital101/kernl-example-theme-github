@@ -1,5 +1,12 @@
 <?php
 /**
+ * ------------------------------------
+ * Kernl Theme Update Checker v1.2.0
+ * https://kernl.us
+ * ------------------------------------
+ *
+ * Derived from:
+ *
  * Theme Update Checker Library 1.2
  * http://w-shadow.com/
  *
@@ -27,6 +34,7 @@ class ThemeUpdateChecker {
 	public $license = false;
 	public $remoteGetTimeout = 10;
 	public $collectAnalytics = true;
+	public $licenseErrorMessage = "Your license is invalid.  Please make sure that you have entered a valid license or that your license has not expired.";
 
 	protected $optionName = '';      //Where to store update info.
 	protected $automaticCheckDone = false;
@@ -46,6 +54,12 @@ class ThemeUpdateChecker {
 		$this->optionName = 'external_theme_updates-'.$this->theme;
 
 		$this->installHooks();
+
+		// Check to see if we should display the admin notice for invalid license.
+        $themeName = $this->getThemeName();
+        if(get_option("{$themeName}-invalid-notice")) {
+            add_action("current_screen", array($this, "license_invalid_notice"));
+        }
 	}
 
 	/**
@@ -104,10 +118,24 @@ class ThemeUpdateChecker {
             $language = '';
 		}
 
+		try {
+            if ( ! function_exists( 'get_plugins' ) ) {
+	            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+            }
+            $allPlugins = get_plugins();
+            $pluginString = '';
+            foreach ($allPlugins as $pluginPath => $value) {
+                $pluginString = $pluginString . $pluginPath . '|-|' . $value['Name'] . '|-|' . $value['Version'] . '::';
+            }
+        } catch(Exception $err) {
+            $pluginString = '';
+        }
+
 		$queryArgs['domain'] = urlencode($domain);
 		$queryArgs['collectAnalytics'] = $this->collectAnalytics;
-		$queryArgs['phpVersion'] = $phpVersion;
-        $queryArgs['language'] = $language;
+		$queryArgs['phpVersion'] = urlencode($phpVersion);
+		$queryArgs['language'] = urlencode($language);
+		$queryArgs['plugins'] = urlencode($pluginString);
 		$queryArgs = apply_filters(self::$filterPrefix.'query_args-'.$this->theme, $queryArgs);
 
 		//Various options for the wp_remote_get() call. Themes can filter these, too.
@@ -134,25 +162,36 @@ class ThemeUpdateChecker {
 			if ( ($themeUpdate != null) && version_compare($themeUpdate->version, $this->getInstalledVersion(), '<=') ){
 				$themeUpdate = null;
 			}
+			$themeName = $this->getThemeName();
+			delete_option("{$themeName}-invalid-notice");
 		} else if ($code == 401) {
-			add_action( 'admin_notices', array($this, 'purchase_code_invalid_notice'));
+			$themeName = $this->getThemeName();
+            update_option("{$themeName}-invalid-notice", "show", "yes");
 		}
 
 		$themeUpdate = apply_filters(self::$filterPrefix.'result-'.$this->theme, $themeUpdate, $result);
 		return $themeUpdate;
 	}
 
-	public function purchase_code_invalid_notice() {
+	public function getThemeName() {
 		$theme = wp_get_theme($this->theme);
-		$themeName = $theme->get('Name');
+		return $theme->get('Name');
+	}
+
+	public function license_invalid_notice() {
+        $themeName = $this->getThemeName();
+        $whitelist_admin_pages = array( 'themes', 'update-core' );
+        $admin_page = get_current_screen();
+        if( in_array( $admin_page->base, $whitelist_admin_pages ) ) {
     ?>
         <div class="notice notice-error">
             <p>
-                <strong><? echo $themeName; ?>:  </strong>
-                Your purchase code is invalid.  Please make sure that you have entered a valid purchase code to ensure that you receive updates.
+                <strong><?= $themeName; ?>:  </strong>
+                <?= $this->licenseErrorMessage; ?>
             </p>
         </div>
     <?php
+        }
     }
 
 	/**
