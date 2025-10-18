@@ -2,8 +2,8 @@
 
 require 'theme_update_check.php';
 $MyUpdateChecker = new ThemeUpdateChecker(
-    'kernl-example-theme-github',
-    'https://kernl.us/api/v1/theme-updates/5650935a48447e402e805296/'
+    'kernl-example-theme',
+    'https://kernl.us/api/v1/theme-updates/5552a51540e6512d5296fb06/'
 );
 $MyUpdateChecker->remoteGetTimeout = 5;
 
